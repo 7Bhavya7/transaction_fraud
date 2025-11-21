@@ -7,8 +7,7 @@ import pandas as pd
 #  HARDCODE YOUR MODEL API KEY
 # -----------------------------
 # ⚠️ Apna real key yahan daalo, is file ko public repo me mat daalna
-MODEL_API_KEY = "AIzaSyDI6mmaaD4Y_v_lo_zJMWLH_XS37bbn3T8
-"
+MODEL_API_KEY = "AIzaSyDI6mmaaD4Y_v_lo_zJMWLH_XS37bbn3T8"
 
 # Configure model client
 genai.configure(api_key=MODEL_API_KEY)
