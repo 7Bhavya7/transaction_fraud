@@ -16,13 +16,11 @@ def predict_fraud(transaction: dict) -> dict:
     """
 
     fraud_score = round(random.uniform(0, 1), 2)
-
     fraud_label = "FRAUD" if fraud_score > 0.6 else "NOT_FRAUD"
 
     return {
         "fraud_label": fraud_label,
-        "fraud_score": fraud_score,
-        "reason": "Prediction generated locally without any external API."
+        "fraud_score": fraud_score
     }
 
 
@@ -85,9 +83,8 @@ if st.button("🔍 Predict Fraud for This Transaction"):
 
     st.subheader("Prediction Result")
 
-    label = result.get("fraud_label")
-    score = result.get("fraud_score")
-    reason = result.get("reason")
+    label = result["fraud_label"]
+    score = result["fraud_score"]
 
     if label == "FRAUD":
         st.error("🚨 FRAUD DETECTED")
@@ -95,7 +92,6 @@ if st.button("🔍 Predict Fraud for This Transaction"):
         st.success("✅ Transaction is NOT FRAUD")
 
     st.write(f"**Fraud Score:** `{score}`")
-    st.write("**Reason:**", reason)
 
     with st.expander("View transaction JSON"):
         st.json(tx)
@@ -130,8 +126,7 @@ if uploaded_file is not None:
                 results.append({
                     **transaction,
                     "fraud_label": result["fraud_label"],
-                    "fraud_score": result["fraud_score"],
-                    "reason": result["reason"],
+                    "fraud_score": result["fraud_score"]
                 })
 
         result_df = pd.DataFrame(results)
