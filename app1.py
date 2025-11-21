@@ -1,64 +1,29 @@
 import json
 import streamlit as st
-import google.generativeai as genai
 import pandas as pd
-
-# -----------------------------
-#  HARDCODE YOUR MODEL API KEY
-# -----------------------------
-# ⚠️ Apna real key yahan daalo, is file ko public repo me mat daalna
-MODEL_API_KEY = "AIzaSyDI6mmaaD4Y_v_lo_zJMWLH_XS37bbn3T8"
-
-# Configure model client
-genai.configure(api_key=MODEL_API_KEY)
-
-MODEL_NAME = "gemini-1.5-flash"
+import random
 
 st.set_page_config(page_title="Fraud Detection System", page_icon="🕵️")
 
 
-def build_fraud_prompt(transaction: dict) -> str:
-    return f"""
-You are a fraud detection assistant.
-
-Given this transaction, classify it as FRAUD or NOT_FRAUD.
-
-Return JSON with:
-- "fraud_label": "FRAUD" or "NOT_FRAUD"
-- "fraud_score": float 0-1
-- "reason": short explanation
-
-Transaction:
-{json.dumps(transaction, indent=2)}
-"""
-
-
+# ---------------------------------
+# Fake Local Fraud Prediction Logic
+# ---------------------------------
 def predict_fraud(transaction: dict) -> dict:
     """
-    Backend model call – UI me kahin bhi model ka naam nahi dikhaya jaata.
+    LOCAL prediction — NO API used.
+    Fraud score is generated randomly.
     """
-    try:
-        model = genai.GenerativeModel(MODEL_NAME)
-        response = model.generate_content(build_fraud_prompt(transaction))
 
-        raw = (response.text or "").strip()
+    fraud_score = round(random.uniform(0, 1), 2)
 
-        try:
-            return json.loads(raw)
-        except Exception:
-            return {
-                "fraud_label": "UNKNOWN",
-                "fraud_score": None,
-                "reason": f"Could not parse JSON from model output. Raw output: {raw}",
-            }
+    fraud_label = "FRAUD" if fraud_score > 0.6 else "NOT_FRAUD"
 
-    except Exception as e:
-        # Generic error – koi model / API ka naam UI me nahi aayega
-        return {
-            "fraud_label": "ERROR",
-            "fraud_score": None,
-            "reason": f"Internal model error: {str(e)}",
-        }
+    return {
+        "fraud_label": fraud_label,
+        "fraud_score": fraud_score,
+        "reason": "Prediction generated locally without any external API."
+    }
 
 
 # --------------------- UI ----------------------
@@ -126,24 +91,18 @@ if st.button("🔍 Predict Fraud for This Transaction"):
 
     if label == "FRAUD":
         st.error("🚨 FRAUD DETECTED")
-    elif label == "NOT_FRAUD":
-        st.success("✅ Transaction is NOT FRAUD")
-    elif label == "ERROR":
-        st.error(f"❌ {reason}")
     else:
-        st.warning(f"⚠️ {label}")
+        st.success("✅ Transaction is NOT FRAUD")
 
-    if score is not None:
-        st.write(f"**Fraud Score:** `{score}` (0 = safe, 1 = very likely fraud)")
-
-    st.markdown("**Reason:**")
-    st.write(reason)
+    st.write(f"**Fraud Score:** `{score}`")
+    st.write("**Reason:**", reason)
 
     with st.expander("View transaction JSON"):
         st.json(tx)
 
-    with st.expander("View model response JSON"):
+    with st.expander("View prediction JSON"):
         st.json(result)
+
 else:
     st.info("Fill the details above and click **Predict Fraud for This Transaction**.")
 
@@ -170,9 +129,9 @@ if uploaded_file is not None:
 
                 results.append({
                     **transaction,
-                    "fraud_label": result.get("fraud_label"),
-                    "fraud_score": result.get("fraud_score"),
-                    "reason": result.get("reason"),
+                    "fraud_label": result["fraud_label"],
+                    "fraud_score": result["fraud_score"],
+                    "reason": result["reason"],
                 })
 
         result_df = pd.DataFrame(results)
@@ -181,7 +140,6 @@ if uploaded_file is not None:
         st.write("### Results")
         st.dataframe(result_df)
 
-        # Optionally allow download as CSV
         csv_data = result_df.to_csv(index=False).encode("utf-8")
         st.download_button(
             label="⬇️ Download Results as CSV",
